@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qwen 32b Coder</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1><i class="fas fa-robot"></i> Qwen 32b Coder</h1>
+            </div>
+            <div class="settings-container">
+                <h2><i class="fas fa-cog"></i> Chatbot Settings</h2>
+                <div class="setting-group">
+                    <label for="model">Model:</label>
+                    <select id="model" class="setting-input">
+                        <option value="Qwen/Qwen2.5-Coder-32B-Instruct">Qwen/Qwen2.5-Coder-32B-Instruct</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label for="conversation-context">Context Length:</label>
+                    <div class="range-container">
+                        <input type="range" id="conversation-context" min="0" max="10" value="5" class="setting-input">
+                        <span id="conversation-context-value">5</span>
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <label for="system-prompt">System Prompt:</label>
+                    <textarea id="system-prompt" class="setting-input" rows="3">You are Super Intelligent Coding Assistant.</textarea>
+                </div>
+                <button id="clear-conversation" class="clear-btn">
+                    <i class="fas fa-trash"></i> Clear Chat
+                </button>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="chat-container">
+                <div id="chatbox" class="messages"></div>
+                <div class="input-container">
+                    <textarea id="user-input" placeholder="Type your message..." rows="1"></textarea>
+                    <button id="send-button">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>
