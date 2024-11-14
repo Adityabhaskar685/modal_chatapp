@@ -1,20 +1,3 @@
-
-document.addEventListener('DOMContentLoaded', async () => {
-    await waitForMarked();
-
-    marked.setOptions({
-        highlight: function(code, lang) {
-            return highlightCode(code, lang);
-        },
-        breaks: true,
-        gfm: true,
-        pedantic: false,
-        sanitize: false,
-        smartLists: true,
-        smartypants: true
-    });
-});
-
 function waitForMarked() {
     return new Promise((resolve) => {
         if (typeof marked !== 'undefined') {
@@ -37,33 +20,81 @@ function waitForMarked() {
     });
 }
 
-function highlightCode(code, language) {
-    const patterns = {
-        keywords: /(import|from|def|class|if|else|try|except|return|async|await|function|const|let|var|for|while|break|continue)\b/g,
-        strings: /(['"`])(.*?)\1/g,
-        comments: /(#.*|\/\/.*|\/\*[\s\S]*?\*\/)/g,
-        numbers: /\b\d+(\.\d+)?\b/g,
-        functions: /\b\w+(?=\()/g,
-        operators: /([+\-*/%=<>!&|^~]|==|!=|>=|<=|=>|\+=|-=|\*=|\/=|&&|\|\|)/g
-    };
-    code = code
-        .replace(patterns.comments, '<span class="comment">$1</span>')
-        .replace(patterns.strings, '<span class="string">$1$2$1</span>')
-        .replace(patterns.keywords, '<span class="keyword">$1</span>')
-        .replace(patterns.numbers, '<span class="number">$&</span>')
-        .replace(patterns.functions, '<span class="function">$&</span>')
-        .replace(patterns.operators, '<span class="operator">$1</span>');
 
-    return `<pre><code class="language-${language || ''}">${code}</code></pre>`;
-}
+document.addEventListener('DOMContentLoaded', async () => {
+    hljs.highlightAll();
+    await waitForMarked();
+    marked.setOptions({
+        highlight: function(code, lang) {
+            if (lang && hljs.getLanguage(lang)) {
+                return hljs.highlight(code, { language: lang }).value;
+            }
+            return hljs.highlightAuto(code).value;
+        },
+        breaks: true,
+        gfm: true,
+        pedantic: false,
+        sanitize: false,
+        smartLists: true,
+        smartypants: true
+    });
+
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const htmlElement = document.documentElement;
+    const sunIcon = '<i class="fas fa-sun"></i>';
+    const moonIcon = '<i class="fas fa-moon"></i>';
+
+    function updateThemeToggleButton() {
+        const currentTheme = htmlElement.getAttribute('data-theme');
+        if (currentTheme === 'dark') {
+            themeToggleBtn.innerHTML = `${sunIcon}<span>Light Mode</span>`;
+        } else {
+            themeToggleBtn.innerHTML = `${moonIcon}<span>Dark Mode</span>`;
+        }
+    }
+    updateThemeToggleButton();
+
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+        htmlElement.setAttribute('data-theme', savedTheme);
+        updateThemeToggleButton();
+    }
+    themeToggleBtn.addEventListener('click', function() {
+        const currentTheme = htmlElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        htmlElement.setAttribute('data-theme', newTheme);
+        updateThemeToggleButton();
+        
+        localStorage.setItem('theme', newTheme);
+    });
+    const userInput = document.getElementById('user-input');
+    userInput.addEventListener('input', () => autoResizeTextarea(userInput));
+
+    document.getElementById('send-button').addEventListener('click', sendMessage);
+
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    document.getElementById('conversation-context').addEventListener('input', (e) => {
+        document.getElementById('conversation-context-value').textContent = e.target.value;
+    });
+
+    document.getElementById('clear-conversation').addEventListener('click', () => {
+        const chatbox = document.getElementById('chatbox');
+        chatbox.innerHTML = '';
+    });
+});
+
 
 function autoResizeTextarea(textarea) {
     textarea.style.height = 'auto';
     textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
 }
-
-const userInput = document.getElementById('user-input');
-userInput.addEventListener('input', () => autoResizeTextarea(userInput));
 
 function scrollToBottom() {
     const chatbox = document.getElementById('chatbox');
@@ -100,6 +131,7 @@ async function renderMarkdown(content) {
 }
 
 async function sendMessage() {
+    const userInput = document.getElementById('user-input');
     const message = userInput.value.trim();
     if (!message) return;
 
@@ -109,6 +141,7 @@ async function sendMessage() {
     userMessageDiv.className = 'message user-message';
     userMessageDiv.innerHTML = await renderMarkdown(message);
     chatbox.appendChild(userMessageDiv);
+    highlightNewCodeBlocks(userMessageDiv);
     scrollToBottom();
 
     userInput.value = '';
@@ -132,6 +165,7 @@ async function sendMessage() {
                     chatbox.appendChild(assistantMessageDiv);
                 }
                 assistantMessageDiv.innerHTML = await renderMarkdown(response);
+                highlightNewCodeBlocks(assistantMessageDiv);
                 scrollToBottom();
             }
         } catch (error) {
@@ -142,22 +176,14 @@ async function sendMessage() {
     socket.onerror = (error) => {
         console.error('WebSocket error:', error);
     };
+
 }
 
-document.getElementById('send-button').addEventListener('click', sendMessage);
-
-document.getElementById('user-input').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-    }
-});
-
-document.getElementById('conversation-context').addEventListener('input', (e) => {
-    document.getElementById('conversation-context-value').textContent = e.target.value;
-});
-
-document.getElementById('clear-conversation').addEventListener('click', () => {
-    const chatbox = document.getElementById('chatbox');
-    chatbox.innerHTML = '';
-});
+function highlightNewCodeBlocks(container) {
+    container.querySelectorAll('pre code').forEach((block) => {
+        if (!block.dataset.highlighted) {
+            hljs.highlightElement(block);
+            block.dataset.highlighted = 'yes';
+        }
+    });
+}
