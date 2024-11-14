@@ -39,7 +39,7 @@ templates = Jinja2Templates(directory="frontend/templates")
 
 
 class Settings:
-    OPENAI_API_KEY = os.getenv("API_KEY", "super-secret-token")
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "super-secret-token")
     OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", None)
     DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "gpt-4o")
     MAX_CONVERSATION_HISTORY = 10
@@ -94,13 +94,11 @@ async def websocket_endpoint(websocket: WebSocket):
                 client = get_openai_client()
                 response = ""
 
-                stream = client.chat.completions.create(
+                for chunk in client.chat.completions.create(
                     model=settings.DEFAULT_MODEL,
                     messages=messages,
                     stream=True
-                )
-
-                for chunk in stream:
+                ):
                     if chunk.choices[0].delta.content is not None:
                         response += chunk.choices[0].delta.content
                         await websocket.send_json({

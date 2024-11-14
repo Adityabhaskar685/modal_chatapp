@@ -43,7 +43,7 @@ cd chatapp
 
 2. Create a virtual environment and activate it:
 ```bash
-python -m venv venv
+python3 -m venv venv # on Windows, use: python -m venv venv
 source venv/bin/activate  # On Windows, use: venv\Scripts\activate
 ```
 

@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Qwen 32b Coder</title>
     <link rel="stylesheet" href="/static/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js" integrity="sha512-6yoqbrcLAHDWAdQmiRlHG4+m0g/CT/V9AGyxabG8j7Jk8j3r3K6due7oqpiRMZqcYe9WM2gPcaNNxnl2ux+3tA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
     <div class="app-container">
@@ -16,6 +18,13 @@
             </div>
             <div class="settings-container">
                 <h2><i class="fas fa-cog"></i> Chatbot Settings</h2>
+                <div class="setting-group">
+                    <label for="theme-toggle">Theme:</label>
+                    <button id="theme-toggle" class="theme-toggle-btn">
+                        <i class="fas fa-sun"></i>
+                        <span>Light Mode</span>
+                    </button>
+                </div>
                 <div class="setting-group">
                     <label for="model">Model:</label>
                     <select id="model" class="setting-input">
@@ -42,7 +51,7 @@
             <div class="chat-container">
                 <div id="chatbox" class="messages"></div>
                 <div class="input-container">
-                    <textarea id="user-input" placeholder="Type your message..." rows="1"></textarea>
+                    <textarea id="user-input" placeholder="Fire the questions..." rows="1"></textarea>
                     <button id="send-button">
                         <i class="fas fa-paper-plane"></i>
                     </button>
