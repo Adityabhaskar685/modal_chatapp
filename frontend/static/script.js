@@ -1,3 +1,22 @@
+let socket = null;
+let messageCounter = 0
+
+function initializeWebSocket(){
+    if (socket === null || socket.readyState === WebSocket.CLOSED) {
+        socket = new WebSocket('ws://' + window.location.host + '/ws');
+
+        socket.onclose = () => {
+            console.log("Websockte connection closed.");
+            setTimeout(initializeWebSocket, 3000);
+        }
+
+        socket.onerror = (error) => {
+            console.error("Websocket error: ", error);
+        }
+    }
+    return socket;
+};
+
 function waitForMarked() {
     return new Promise((resolve) => {
         if (typeof marked !== 'undefined') {
@@ -23,6 +42,7 @@ function waitForMarked() {
 
 document.addEventListener('DOMContentLoaded', async () => {
     hljs.highlightAll();
+    initializeWebSocket();
     await waitForMarked();
     marked.setOptions({
         highlight: function(code, lang) {
@@ -147,36 +167,45 @@ async function sendMessage() {
     userInput.value = '';
     userInput.style.height = 'auto';
 
-    const socket = new WebSocket('ws://' + window.location.host + '/ws');
+    messageCounter++;
+    messageCounter++;
+    const currentAssistantDiv = document.createElement('div');
+    currentAssistantDiv.className = 'message assistant-message';
+    currentAssistantDiv.id = `assistant-message-${messageCounter}`;
+    chatbox.appendChild(currentAssistantDiv);
 
-    socket.onopen = () => {
-        socket.send(JSON.stringify({ message: message, role: 'user' }));
-    };
+    if (!socket || socket.readyState === WebSocket.CLOSED){
+        initializeWebSocket();
+    }
 
-    let assistantMessageDiv;
 
-    socket.onmessage = async (event) => {
-        try {
-            const response = JSON.parse(event.data);
-            if (response.role === 'assistant') {
-                if (!assistantMessageDiv) {
-                    assistantMessageDiv = document.createElement('div');
-                    assistantMessageDiv.className = 'message assistant-message';
-                    chatbox.appendChild(assistantMessageDiv);
+    if (!socket.onmessage){
+        socket.onmessage = async (event) => {
+            try{
+                const response = JSON.parse(event.data);
+                if (response.role === 'assistant') {
+                    const assistantDiv = document.getElementById(`assistant-message-${messageCounter}`);
+                    if (assistantDiv) {
+                        assistantDiv.innerHTML = await renderMarkdown(response);
+                        highlightNewCodeBlocks(assistantDiv);
+                        scrollToBottom();
+                    }
                 }
-                assistantMessageDiv.innerHTML = await renderMarkdown(response);
-                highlightNewCodeBlocks(assistantMessageDiv);
-                scrollToBottom();
             }
-        } catch (error) {
-            console.error('Error processing message:', error);
+            catch (error) {
+                console.error("Error processing message:", error);
+            }
         }
-    };
+    }
 
-    socket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-    };
-
+    if (socket.readyState === WebSocket.CONNECTING) {
+        socket.addEventListener('open', () => {
+            socket.send(JSON.stringify({message: message, role: 'user'}));
+        });
+    }
+    else if (socket.readyState === WebSocket.OPEN){
+        socket.send(JSON.stringify({message: message, role: 'user'}));
+    }
 }
 
 function highlightNewCodeBlocks(container) {
